@@ -55,11 +55,42 @@ int main() {
 	 int client_fd = accept(server_fd, (struct sockaddr *) &client_addr, &client_addr_len);
 	 printf("Client connected\n");
 
-	 const char* reply = "HTTP/1.1 200 OK\r\n\r\n";
-	 send(client_fd, reply, strlen(reply), 0);
-
 	 char output[1028];
 	 recv(client_fd, output, sizeof(output), 0);
+	 if(output == -1)
+	 {
+		 printf("Error reciving request: %s...\n", strerror(errno));
+		 return 1;
+	 }
+
+	 
+  	char *path = strstr(output, " ");
+
+  	if (path) 
+	{
+
+    		path++;
+
+    		char *path_end = strstr(path, " ");
+
+    		if (path_end) 
+		{
+
+      			*path_end = '\0';
+
+    		}
+
+  	}
+	const char* reply;
+ 	if(path && strcmp(path, "/") == 0)
+	{
+		reply = "HTTP/1.1 200 OK\r\n\r\n";
+	} else
+	{
+		reply = "HTTP/1.1 404 Not Found\r\n\r\n";
+	}
+
+	send(client_fd, reply, strlen(reply), 0);
 
 	 close(client_fd);
 	 close(server_fd);
