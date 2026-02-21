@@ -56,7 +56,6 @@ int main() {
 	printf("Client connected\n");
 
 	char output[1028];
-	recv(client_fd, output, sizeof(output), 0);
 	ssize_t bytes_received = recv(client_fd, output, sizeof(output) - 1, 0);
 	if (bytes_received == -1) 
 	{
@@ -87,8 +86,8 @@ int main() {
 	{
 		reply = "HTTP/1.1 200 OK\r\n\r\n";
 	}
-	if(path && strcmp(path, "/echo/abc"){
-		reply = "HTTP/1.1 200 OK\r\n Content-Type: text/plain\r\n Contet-Length: 3\r\n\r\n abc";
+	else if(path && strcmp(path, "/echo/abc")){
+		reply = "HTTP/1.1 200 OK\r\n Content-Type: text/plain\r\n Content-Length: 3\r\n\r\n abc";
 	}else 
 	{
 		reply = "HTTP/1.1 404 Not Found\r\n\r\n";
