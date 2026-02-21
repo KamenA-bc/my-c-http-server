@@ -81,17 +81,17 @@ int main() {
 		}
 
 	}
-	char *reply;
+	char reply[1024];
 	if(path && strcmp(path, "/") == 0)
 	{
-		reply = "HTTP/1.1 200 OK\r\n\r\n";
+		strcpy(reply, "HTTP/1.1 200 OK\r\n\r\n");
 	}
 	else if(path && strncmp(path, "/echo/", 6) == 0){
 		path += 6;
-		sprintf(reply, "HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: %d\r\n\r\n%s", strlen(path), path) ;
+		strcpy(reply, "HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: %d\r\n\r\n%s", strlen(path), path) ;
 	}else 
 	{
-		reply = "HTTP/1.1 404 Not Found\r\n\r\n";
+		strcpy(reply, "HTTP/1.1 404 Not Found\r\n\r\n");
 	}
 
 	send(client_fd, reply, strlen(reply), 0);
