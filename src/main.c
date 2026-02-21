@@ -88,7 +88,7 @@ int main() {
 	}
 	else if(path && strncmp(path, "/echo/", 6) == 0){
 		path += 6;
-		strcpy(reply, "HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: %d\r\n\r\n%s", strlen(path), path) ;
+		sprintf(reply, "HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: %d\r\n\r\n%s", strlen(path), path) ;
 	}else 
 	{
 		strcpy(reply, "HTTP/1.1 404 Not Found\r\n\r\n");
