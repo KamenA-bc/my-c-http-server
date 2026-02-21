@@ -86,8 +86,9 @@ int main() {
 	{
 		reply = "HTTP/1.1 200 OK\r\n\r\n";
 	}
-	else if(path && strcmp(path, "/echo/abc")){
-		reply = "HTTP/1.1 200 OK\r\n Content-Type: text/plain\r\n Content-Length: 3\r\n\r\n abc";
+	else if(path && strncmp(path, "/echo/")){
+		*path += 6;
+		sprintf(reply, "HTTP/1.1 200 OK\r\n Content-Type: text/plain\r\n Content-Length: %d\r\n\r\n %s", sizeof(path), path) ;
 	}else 
 	{
 		reply = "HTTP/1.1 404 Not Found\r\n\r\n";
