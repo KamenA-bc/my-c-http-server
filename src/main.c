@@ -58,6 +58,9 @@ int main() {
 	 const char* reply = "HTTP/1.1 200 OK\r\n\r\n";
 	 send(client_fd, reply, strlen(reply), 0);
 
+	 char output[1028];
+	 recv(client_fd, output, sizeof(output), 0);
+
 	 close(client_fd);
 	 close(server_fd);
 
