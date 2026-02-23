@@ -8,29 +8,31 @@
 #include <unistd.h>
 
 int main() {
+	int server_fd = -1;
+	int client_fd = -1;
+	int return_status = 1; // Assume error unless we reach the end of the code
+
 	// Disable output buffering
 	setbuf(stdout, NULL);
 	setbuf(stderr, NULL);
 
-	// You can use print statements as follows for debugging, they'll be visible when running tests.
-	printf("Logs from your program will appear here!\n");
 
-
-	int server_fd, client_addr_len;
+	int client_addr_len;
 	struct sockaddr_in client_addr;
 
 	server_fd = socket(AF_INET, SOCK_STREAM, 0);
-	if (server_fd == -1) {
+	if (server_fd == -1) 
+	{
 		printf("Socket creation failed: %s...\n", strerror(errno));
-		return 1;
+		goto cleanup;
 	}
 
-	// Since the tester restarts your program quite often, setting SO_REUSEADDR
 	// ensures that we don't run into 'Address already in use' errors
 	int reuse = 1;
-	if (setsockopt(server_fd, SOL_SOCKET, SO_REUSEADDR, &reuse, sizeof(reuse)) < 0) {
+	if (setsockopt(server_fd, SOL_SOCKET, SO_REUSEADDR, &reuse, sizeof(reuse)) < 0) 
+	{
 		printf("SO_REUSEADDR failed: %s \n", strerror(errno));
-		return 1;
+		goto cleanup;
 	}
 
 	struct sockaddr_in serv_addr = { .sin_family = AF_INET ,
@@ -38,21 +40,29 @@ int main() {
 		.sin_addr = { htonl(INADDR_ANY) },
 	};
 
-	if (bind(server_fd, (struct sockaddr *) &serv_addr, sizeof(serv_addr)) != 0) {
+	if (bind(server_fd, (struct sockaddr *) &serv_addr, sizeof(serv_addr)) != 0) 
+	{
 		printf("Bind failed: %s \n", strerror(errno));
-		return 1;
+		goto cleanup;
 	}
 
 	int connection_backlog = 5;
-	if (listen(server_fd, connection_backlog) != 0) {
+	if (listen(server_fd, connection_backlog) != 0) 
+	{
 		printf("Listen failed: %s \n", strerror(errno));
-		return 1;
+		goto cleanup;
 	}
 
 	printf("Waiting for a client to connect...\n");
 	client_addr_len = sizeof(client_addr);
 
-	int client_fd = accept(server_fd, (struct sockaddr *) &client_addr, &client_addr_len);
+	client_fd = accept(server_fd, (struct sockaddr *) &client_addr, &client_addr_len);
+	if (client_fd == -1) \
+	{
+        	printf("Accept failed: %s\n", strerror(errno));
+        	goto cleanup;
+    	}
+
 	printf("Client connected\n");
 
 	char output[1028];
@@ -60,7 +70,7 @@ int main() {
 	if (bytes_received == -1) 
 	{
 		printf("Error receiving request: %s...\n", strerror(errno));
-		return 1;
+		goto cleanup;
 	}
 
 
@@ -81,23 +91,61 @@ int main() {
 		}
 
 	}
+
+	char *user_agent = strstr(output, "User-Agent");
+
+	if(user_agent)
+	{
+		user_agent += 12;
+
+		char *user_end = strstr(user_agent, "\r\n\r\n");
+		
+		if(user_end)
+		{
+			*user_end = '\0';
+		}
+	}
+
+
 	char reply[1024];
 	if(path && strcmp(path, "/") == 0)
 	{
 		strcpy(reply, "HTTP/1.1 200 OK\r\n\r\n");
-	}
-	else if(path && strncmp(path, "/echo/", 6) == 0){
+	}else if(path && strncmp(path, "/echo/", 6) == 0)
+	{
 		path += 6;
-		sprintf(reply, "HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: %d\r\n\r\n%s", strlen(path), path) ;
+		sprintf(reply, "HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: %d\r\n\r\n%s", (int)strlen(path), path) ;
+
+	}else if(path && strcmp(path, "/user-agent") == 0) 
+	{
+
+		sprintf(reply, "HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: %d\r\n\r\n%s", (int)strlen(user_agent), user_agent) ;
+
 	}else 
 	{
+
 		strcpy(reply, "HTTP/1.1 404 Not Found\r\n\r\n");
+
 	}
 
-	send(client_fd, reply, strlen(reply), 0);
+	if(send(client_fd, reply, strlen(reply), 0) == -1)
+	{
+		printf("Send failed: %s\n", strerror(errno));
+        	goto cleanup;
+	}
 
-	close(client_fd);
-	close(server_fd);
+	return_status = 0;
+	
+	cleanup:
+		if(client_fd != -1)
+		{
+			close(client_fd);
+		}
+		if(server_fd != -1)
+		{
+			close(server_fd);
+		}
 
-	return 0;
+	return return_status;
 }
+
