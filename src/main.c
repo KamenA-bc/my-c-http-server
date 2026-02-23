@@ -74,8 +74,21 @@ int main() {
 	}
 
 
-	char *path = strstr(output, " ");
+	char *user_agent = strstr(output, "User-Agent");
+	if(user_agent)
+	{
+		user_agent += 12;
 
+		char *user_end = strstr(user_agent, "\r\n");
+		
+		if(user_end)
+		{
+			*user_end = '\0';
+		}
+	}
+
+
+	char *path = strstr(output, " ");
 	if (path) 
 	{
 
@@ -91,21 +104,6 @@ int main() {
 		}
 
 	}
-
-	char *user_agent = strstr(output, "User-Agent");
-
-	if(user_agent)
-	{
-		user_agent += 12;
-
-		char *user_end = strstr(user_agent, "\r\n\r\n");
-		
-		if(user_end)
-		{
-			*user_end = '\0';
-		}
-	}
-
 
 	char reply[1024];
 	if(path && strcmp(path, "/") == 0)
