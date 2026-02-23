@@ -7,10 +7,12 @@
 #include <errno.h>
 #include <unistd.h>
 
+#define BUFFER_SIZE 1024
+
 int main() {
 	int server_fd = -1;
 	int client_fd = -1;
-	int return_status = 1; // Assume error unless we reach the end of the code
+	int return_status = 1; // Assume error, unless we reach the end of the code
 
 	// Disable output buffering
 	setbuf(stdout, NULL);
@@ -65,7 +67,7 @@ int main() {
 
 	printf("Client connected\n");
 
-	char output[1028];
+	char output[BUFFER_SIZE];
 	ssize_t bytes_received = recv(client_fd, output, sizeof(output) - 1, 0);
 	if (bytes_received == -1) 
 	{
@@ -105,7 +107,7 @@ int main() {
 
 	}
 
-	char reply[1024];
+	char reply[BUFFER_SIZE];
 	if(path && strcmp(path, "/") == 0)
 	{
 		strcpy(reply, "HTTP/1.1 200 OK\r\n\r\n");
