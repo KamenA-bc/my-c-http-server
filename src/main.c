@@ -10,12 +10,11 @@
 
 #define BUFFER_SIZE 1024
 
-	void *parsing_worker(void *args);
+void *parsing_worker(void *args);
 
 int main() {
-	int server_fd = -1;
 	int *client_fd_ptr;
-	int return_status = 1; // Assume error, unless we reach the end of the code
+	int return_status = 1; //Assume there was an error unless we reach the end of the code;
 
 	pthread_t client_connection;
 
@@ -27,21 +26,38 @@ int main() {
 	int client_addr_len;
 	struct sockaddr_in client_addr;
 
-	server_fd = socket(AF_INET, SOCK_STREAM, 0);
+	int server_fd = socket(AF_INET, SOCK_STREAM, 0);
+	if(server_fd == -1)
+	{
+		printf("Socket creating failed: %s...\n", strerror(errno));
+		goto end;
+	}
 
 	// ensures that we don't run into 'Address already in use' errors
 	int reuse = 1;
-	setsockopt(server_fd, SOL_SOCKET, SO_REUSEADDR, &reuse, sizeof(reuse));
+	if(setsockopt(server_fd, SOL_SOCKET, SO_REUSEADDR, &reuse, sizeof(reuse)) == -1)
+	{
+		printf("SO_REUSEADDR failed: %s \n", strerror(errno));
+		goto cleanup;
+	}
 
 	struct sockaddr_in serv_addr = { .sin_family = AF_INET ,
 		.sin_port = htons(4221),
 		.sin_addr = { htonl(INADDR_ANY) },
 	};
 
-	bind(server_fd, (struct sockaddr *) &serv_addr, sizeof(serv_addr));
+	if(bind(server_fd, (struct sockaddr *) &serv_addr, sizeof(serv_addr)) == -1)
+	{
+		printf("Bind failed: %s \n", strerror(errno));
+		goto cleanup;
+	}
 
 	int connection_backlog = 5;
-	listen(server_fd, connection_backlog);
+	if(listen(server_fd, connection_backlog) == -1)
+	{
+		printf("Listen failed: %s \n", strerror(errno));
+		goto cleanup;
+	}
 
 
 
@@ -52,15 +68,33 @@ int main() {
 		client_addr_len = sizeof(client_addr);
 		client_fd_ptr = malloc(sizeof(int));
 		*client_fd_ptr = accept(server_fd, (struct sockaddr *) &client_addr, &client_addr_len);
-		pthread_create(&client_connection, NULL, parsing_worker, client_fd_ptr);
+
+		if(*client_fd_ptr == -1)
+		{
+			printf("Accept failed: %s \n", strerror(errno));
+			free(client_fd_ptr);
+			continue;
+		}
+
+		if(pthread_create(&client_connection, NULL, parsing_worker, client_fd_ptr) != 0)
+		{
+			printf("Failed to creat thread!\n");
+			close(*client_fd_ptr);
+			free(client_fd_ptr);
+			continue;
+		}
 
 
 	}
 
-	close(server_fd);
+	return_status = 0;
 
-	return 0;
+cleanup:
+	close(server_fd);
+end:
+	return return_status;
 }
+
 
 void *parsing_worker(void *args)
 {
@@ -70,7 +104,11 @@ void *parsing_worker(void *args)
 
 	char output[BUFFER_SIZE];
 	ssize_t bytes_received = recv(client_fd, output, sizeof(output) - 1, 0);
-
+	if(bytes_received == -1)
+	{
+		printf("Error receiving request: %s...\n", strerror(errno));
+		goto cleanup;
+	}
 
 	char *user_agent = strstr(output, "User-Agent");
 	if(user_agent)
@@ -114,8 +152,9 @@ void *parsing_worker(void *args)
 
 	}else if(path && strcmp(path, "/user-agent") == 0) 
 	{
-
+		if(user_agent != NULL){
 		sprintf(reply, "HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: %d\r\n\r\n%s", (int)strlen(user_agent), user_agent) ;
+		}
 
 	}else 
 	{
@@ -124,8 +163,13 @@ void *parsing_worker(void *args)
 
 	}
 
-	send(client_fd, reply, strlen(reply), 0);
+	if(send(client_fd, reply, strlen(reply), 0) == -1)
+	{
+		printf("Send failed: %s \n", strerror(errno));
+		goto cleanup;
+	}
 
-	close(client_fd);
+	cleanup:
+		close(client_fd);
 }
 
