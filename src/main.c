@@ -153,7 +153,7 @@ void *parsing_worker(void *args)
 	}else if(path && strcmp(path, "/user-agent") == 0) 
 	{
 		if(user_agent != NULL){
-		sprintf(reply, "HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: %d\r\n\r\n%s", (int)strlen(user_agent), user_agent) ;
+			sprintf(reply, "HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: %d\r\n\r\n%s", (int)strlen(user_agent), user_agent) ;
 		}
 
 	}else 
@@ -169,7 +169,7 @@ void *parsing_worker(void *args)
 		goto cleanup;
 	}
 
-	cleanup:
-		close(client_fd);
+cleanup:
+	close(client_fd);
 }
 
