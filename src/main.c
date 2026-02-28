@@ -138,7 +138,6 @@ void *parsing_worker(void *args)
 			*path_end = '\0';
 
 		}
-
 	}
 
 	char reply[BUFFER_SIZE];
@@ -156,13 +155,14 @@ void *parsing_worker(void *args)
 
 		if(access(path, F_OK) == 0)
 		{
-			FILE *fp = fopen(path, "r");
-			fseek(fp, 0L, SEEK_END);
+			FILE *fp = fopen(path, "rb");
+			fseek(fp, 0, SEEK_END);
 			int res = ftell(fp);
-			rewind(fp);
+			fseek(fp, 0, SEEK_SET);
 
-			char buffer[BUFFER_SIZE];
-			fgets(buffer, BUFFER_SIZE, fp);
+			char *buffer = malloc(res);
+			fread(buffer, 1, res, fp);
+			fclose(fp);
 			sprintf(reply, "HTTP/1.1 200 OK\r\nContent-Type: application/octet-stream\r\nContent-Length: %d\r\n\r\n%s", res, buffer);
 			fclose(fp);
 		}else
