@@ -163,11 +163,11 @@ void *parsing_worker(void *args)
 
 			char buffer[BUFFER_SIZE];
 			fread(buffer, 1, res, fp);
-			sprintf(reply, "HTTP/1.1 200 OK\r\nContent-Type : application/octet-stream\r\nContent-Length: %d\r\n\r\n%s", res, buffer);
+			sprintf(reply, "HTTP/1.1 200 OK\r\nContent-Type: application/octet-stream\r\nContent-Length: %d\r\n\r\n%s", res, buffer);
 			fclose(fp);
 		}else
 		{
-			sprintf(reply, "HTTP/1.1 400 Not Found\r\n\r\n");
+			sprintf(reply, "HTTP/1.1 404 Not Found\r\n\r\n");
 		}
 	}else if(path && strcmp(path, "/user-agent") == 0) 
 	{
