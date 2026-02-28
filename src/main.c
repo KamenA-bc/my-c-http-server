@@ -155,7 +155,7 @@ void *parsing_worker(void *args)
 		}
 	}
 
-	char *reply;
+	char reply[BUFFER_SIZE];
 	if(path && strcmp(path, "/") == 0)
 	{
 		strcpy(reply, "HTTP/1.1 200 OK\r\n\r\n");
@@ -177,7 +177,7 @@ void *parsing_worker(void *args)
 
 		if(access(full_path, F_OK) == 0)
 		{
-			FILE *fp = fopen(path, "rb");
+			FILE *fp = fopen(full_path, "rb");
 			fseek(fp, 0, SEEK_END);
 			int res = ftell(fp);
 			fseek(fp, 0, SEEK_SET);
@@ -187,7 +187,7 @@ void *parsing_worker(void *args)
 			file_buffer[bytes_read] = '\0';
 			fclose(fp);
 
-			snprintf(reply, BUFFER_SIZE, "HTTP/1.1 200 OK\r\nContent-Type: application/octet-stream\r\nContent-Length: %d\r\n\r\n%s", res, file_buffer);
+			snprintf(reply, sizeof(reply) , "HTTP/1.1 200 OK\r\nContent-Type: application/octet-stream\r\nContent-Length: %d\r\n\r\n%s", res, file_buffer);
 
 		}else
 		{
