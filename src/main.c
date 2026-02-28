@@ -153,14 +153,15 @@ void *parsing_worker(void *args)
 	}else if(path && strncmp(path, "/files/", 7) == 0)
 	{
 		path += 7;
+
 		if(access(path, F_OK))
 		{
-			FILE *fp = (path, "r");
+			FILE *fp = fopen(path, "r");
 			fseek(fp, 0L, SEEK_END);
 			int res = ftell(fp);
 			rewind(fp);
 
-			char *buffer[res + 1];
+			char buffer[res + 1];
 			fread(buffer, 1, res, fp);
 			sprintf(reply, "HTTP/1.1 200 OK\r\nContent-Type : application/octet-stream\r\nContent-Length: %d\r\n\r\n%s", res, buffer);
 			fclose(fp);
