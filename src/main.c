@@ -11,8 +11,22 @@
 #define BUFFER_SIZE 1024
 
 void *parsing_worker(void *args);
+char *base_directory = NULL;
 
-int main() {
+int main(int argc, char **argv) {
+
+	for(int i = 0; i<argc; i++)
+	{
+		if(strcmp(argc[i], "--directory") == 0)
+		{
+			if(i + 1 <argc)
+			{
+				base_directory = argv[i + 1];
+				break;
+			}
+		}
+	}
+
 	int *client_fd_ptr;
 	int return_status = 1; //Assume there was an error unless we reach the end of the code;
 
@@ -154,7 +168,14 @@ void *parsing_worker(void *args)
 	{
 		path += 7;
 
-		if(access(path, F_OK) == 0)
+		char full_path[BUFFER_SIZE];
+		if (base_directory != NULL) {
+			snprintf(full_path, sizeof(full_path), "%s/%s", base_directory, path);
+		} else {
+			snprintf(full_path, sizeof(full_path), "%s", path);
+		}
+
+		if(access(full_path, F_OK) == 0)
 		{
 			FILE *fp = fopen(path, "rb");
 			fseek(fp, 0, SEEK_END);
@@ -166,7 +187,7 @@ void *parsing_worker(void *args)
 			file_buffer[bytes_read] = '\0';
 			fclose(fp);
 
-			snprintf(reply, sizeof(file_buffer), "HTTP/1.1 200 OK\r\nContent-Type: application/octet-stream\r\nContent-Length: %d\r\n\r\n%s", res, file_buffer);
+			snprintf(reply, sizeof(reply), "HTTP/1.1 200 OK\r\nContent-Type: application/octet-stream\r\nContent-Length: %d\r\n\r\n%s", res, file_buffer);
 
 		}else
 		{
