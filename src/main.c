@@ -166,7 +166,7 @@ void *parsing_worker(void *args)
 			file_buffer[bytes_read] = '\0';
 			fclose(fp);
 
-			snprintf(reply, "HTTP/1.1 200 OK\r\nContent-Type: application/octet-stream\r\nContent-Length: %d\r\n\r\n%s", res, file_buffer);
+			snprintf(reply, sizeof(file_buffer), "HTTP/1.1 200 OK\r\nContent-Type: application/octet-stream\r\nContent-Length: %d\r\n\r\n%s", res, file_buffer);
 
 		}else
 		{
