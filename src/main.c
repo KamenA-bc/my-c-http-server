@@ -109,6 +109,7 @@ void *parsing_worker(void *args)
 		printf("Error receiving request: %s...\n", strerror(errno));
 		goto cleanup;
 	}
+	output[bytes_received] = '\0';
 
 	char *user_agent = strstr(output, "User-Agent");
 	if(user_agent)
@@ -140,7 +141,7 @@ void *parsing_worker(void *args)
 		}
 	}
 
-	char reply[BUFFER_SIZE];
+	char *reply;
 	if(path && strcmp(path, "/") == 0)
 	{
 		strcpy(reply, "HTTP/1.1 200 OK\r\n\r\n");
@@ -160,11 +161,13 @@ void *parsing_worker(void *args)
 			int res = ftell(fp);
 			fseek(fp, 0, SEEK_SET);
 
-			char *buffer = malloc(res);
-			fread(buffer, 1, res, fp);
+			char *file_buffer[res + 1];
+			size_t bytes_read = fread(file_buffer, 1, res, fp);
+			file_buffer[bytes_read] = '\0';
 			fclose(fp);
-			sprintf(reply, "HTTP/1.1 200 OK\r\nContent-Type: application/octet-stream\r\nContent-Length: %d\r\n\r\n%s", res, buffer);
-			fclose(fp);
+
+			snprintf(reply, "HTTP/1.1 200 OK\r\nContent-Type: application/octet-stream\r\nContent-Length: %d\r\n\r\n%s", res, file_buffer);
+
 		}else
 		{
 			sprintf(reply, "HTTP/1.1 404 Not Found\r\n\r\n");
@@ -191,4 +194,3 @@ void *parsing_worker(void *args)
 cleanup:
 	close(client_fd);
 }
-
