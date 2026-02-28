@@ -161,7 +161,7 @@ void *parsing_worker(void *args)
 			int res = ftell(fp);
 			fseek(fp, 0, SEEK_SET);
 
-			char *file_buffer[res + 1];
+			char file_buffer[res + 1];
 			size_t bytes_read = fread(file_buffer, 1, res, fp);
 			file_buffer[bytes_read] = '\0';
 			fclose(fp);
