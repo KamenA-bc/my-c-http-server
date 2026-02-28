@@ -162,7 +162,7 @@ void *parsing_worker(void *args)
 			rewind(fp);
 
 			char buffer[BUFFER_SIZE];
-			fread(buffer, 1, res, fp);
+			fgets(buffer, BUFFER_SIZE, fp);
 			sprintf(reply, "HTTP/1.1 200 OK\r\nContent-Type: application/octet-stream\r\nContent-Length: %d\r\n\r\n%s", res, buffer);
 			fclose(fp);
 		}else
