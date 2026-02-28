@@ -142,7 +142,6 @@ void *parsing_worker(void *args)
 	}
 
 	char reply[BUFFER_SIZE];
-	char buffer[BUFFER_SIZE];
 	if(path && strcmp(path, "/") == 0)
 	{
 		strcpy(reply, "HTTP/1.1 200 OK\r\n\r\n");
@@ -155,13 +154,14 @@ void *parsing_worker(void *args)
 	{
 		path += 7;
 
-		if(access(path, F_OK))
+		if(access(path, F_OK) == 0)
 		{
 			FILE *fp = fopen(path, "r");
 			fseek(fp, 0L, SEEK_END);
 			int res = ftell(fp);
 			rewind(fp);
 
+			char buffer[BUFFER_SIZE];
 			fread(buffer, 1, res, fp);
 			sprintf(reply, "HTTP/1.1 200 OK\r\nContent-Type : application/octet-stream\r\nContent-Length: %d\r\n\r\n%s", res, buffer);
 			fclose(fp);
