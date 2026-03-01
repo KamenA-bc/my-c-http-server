@@ -244,20 +244,20 @@ void *parsing_worker(void *args)
 			{
 				FILE *fp = fopen(full_path, "w");
 
-				fprintf(fp, request_body);
+				fprintf(fp, "%s", request_body);
 
 				fclose(fp);
 
-				strcpy(reply, "HTTP/1.1 201 Created\r\n\r\n";
+				strcpy(reply, "HTTP/1.1 201 Created\r\n\r\n");
 			} else
 			{
-				strcpy(reply, "HTTP/1.1 404 Not Found\r\n\r\n";
+				strcpy(reply, "HTTP/1.1 404 Not Found\r\n\r\n");
 			}
 		}
 
 	}else
 	{
-		print("Invalid request method");
+		printf("Invalid request method");
 	}
 
 
