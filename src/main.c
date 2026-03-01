@@ -229,6 +229,7 @@ void *parsing_worker(void *args)
 	{
 		if(path && strncmp(path, "/files/", 7) == 0)
 		{
+			path += 7;
 
 			char full_path[BUFFER_SIZE];
 			if(base_directory != NULL)
@@ -239,10 +240,9 @@ void *parsing_worker(void *args)
 				snprintf(full_path, sizeof(full_path), "%s", path);
 			}
 
-			if(access(full_path, F_OK) == 0)
+			FILE *fp = fopen(full_path, "w");
+			if(fp != NULL)
 			{
-				FILE *fp = fopen(full_path, "w");
-
 				fprintf(fp, "%s", request_body);
 
 				fclose(fp);
@@ -250,7 +250,7 @@ void *parsing_worker(void *args)
 				strcpy(reply, "HTTP/1.1 201 Created\r\n\r\n");
 			} else
 			{
-				strcpy(reply, "HTTP/1.1 404 Not Found gay\r\n\r\n");
+				strcpy(reply, "HTTP/1.1 404 Not Found\r\n\r\n");
 			}
 		}
 
