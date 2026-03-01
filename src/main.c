@@ -125,6 +125,7 @@ void *parsing_worker(void *args)
 	}
 	output[bytes_received] = '\0';
 
+
 	char *user_agent = strstr(output, "User-Agent");
 	if(user_agent)
 	{
@@ -135,6 +136,17 @@ void *parsing_worker(void *args)
 		if(user_end)
 		{
 			*user_end = '\0';
+		}
+	}
+
+
+	char *request_body = strstr(output, "\r\n\r\n");
+	if(request_body)
+	{
+		char *body_end = strstr(request_body, " ");
+		if(body_end)
+		{
+			*body_end = '\0';
 		}
 	}
 
@@ -155,56 +167,100 @@ void *parsing_worker(void *args)
 		}
 	}
 
+
+
 	char reply[BUFFER_SIZE];
-	if(path && strcmp(path, "/") == 0)
+	if(strncmp(output, "GET ", 4) == 0)
 	{
-		strcpy(reply, "HTTP/1.1 200 OK\r\n\r\n");
-	}else if(path && strncmp(path, "/echo/", 6) == 0)
-	{
-		path += 6;
-		sprintf(reply, "HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: %d\r\n\r\n%s", (int)strlen(path), path) ;
-
-	}else if(path && strncmp(path, "/files/", 7) == 0)
-	{
-		path += 7;
-
-		char full_path[BUFFER_SIZE];
-		if (base_directory != NULL) {
-			snprintf(full_path, sizeof(full_path), "%s/%s", base_directory, path);
-		} else {
-			snprintf(full_path, sizeof(full_path), "%s", path);
-		}
-
-		if(access(full_path, F_OK) == 0)
+		if(path && strcmp(path, "/") == 0)
 		{
-			FILE *fp = fopen(full_path, "rb");
-			fseek(fp, 0, SEEK_END);
-			int res = ftell(fp);
-			fseek(fp, 0, SEEK_SET);
-
-			char file_buffer[res + 1];
-			size_t bytes_read = fread(file_buffer, 1, res, fp);
-			file_buffer[bytes_read] = '\0';
-			fclose(fp);
-
-			snprintf(reply, sizeof(reply) , "HTTP/1.1 200 OK\r\nContent-Type: application/octet-stream\r\nContent-Length: %d\r\n\r\n%s", res, file_buffer);
-
-		}else
+			strcpy(reply, "HTTP/1.1 200 OK\r\n\r\n");
+		}else if(path && strncmp(path, "/echo/", 6) == 0)
 		{
-			sprintf(reply, "HTTP/1.1 404 Not Found\r\n\r\n");
+			path += 6;
+			sprintf(reply, "HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: %d\r\n\r\n%s", (int)strlen(path), path) ;
+
+		}else if(path && strncmp(path, "/files/", 7) == 0)
+		{
+			path += 7;
+
+			char full_path[BUFFER_SIZE];
+			if (base_directory != NULL) 
+			{
+				snprintf(full_path, sizeof(full_path), "%s/%s", base_directory, path);
+			} else 
+			{
+				snprintf(full_path, sizeof(full_path), "%s", path);
+			}
+
+			if(access(full_path, F_OK) == 0)
+			{	
+				//We go to the end of the file to get its size, and then return the the begging to read it.
+				FILE *fp = fopen(full_path, "rb");
+				fseek(fp, 0, SEEK_END);
+				int res = ftell(fp);
+				fseek(fp, 0, SEEK_SET);
+
+				char file_buffer[res + 1];
+				size_t bytes_read = fread(file_buffer, 1, res, fp);
+				file_buffer[bytes_read] = '\0';
+				fclose(fp);
+
+				snprintf(reply, sizeof(reply) , "HTTP/1.1 200 OK\r\nContent-Type: application/octet-stream\r\nContent-Length: %d\r\n\r\n%s", res, file_buffer);
+
+			}else
+			{
+				sprintf(reply, "HTTP/1.1 404 Not Found\r\n\r\n");
+			}
+		}else if(path && strcmp(path, "/user-agent") == 0) 
+		{
+			if(user_agent != NULL){
+				sprintf(reply, "HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: %d\r\n\r\n%s", (int)strlen(user_agent), user_agent) ;
+			}
+
+		}else 
+		{
+
+			strcpy(reply, "HTTP/1.1 404 Not Found\r\n\r\n");
+
 		}
-	}else if(path && strcmp(path, "/user-agent") == 0) 
+
+	}else if (strncmp(output,"POST ", 5) == 0)
 	{
-		if(user_agent != NULL){
-			sprintf(reply, "HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: %d\r\n\r\n%s", (int)strlen(user_agent), user_agent) ;
+		if(path && strncmp(path, "/files/", 7) == 0)
+		{
+			path += 7;
+
+			char full_path[BUFFER_SIZE];
+			if(base_directory != NULL)
+			{
+				snprintf(full_path, sizeof(full_path), "%s/%s", base_directory, path);
+			} else
+			{
+				snprintf(full_path, sizeof(full_path), "%s", path);
+			}
+
+			if(access(full_path, F_OK) == 0)
+			{
+				FILE *fp = fopen(full_path, "w");
+
+				fprintf(fp, request_body);
+
+				fclose(fp);
+
+				strcpy(reply, "HTTP/1.1 201 Created\r\n\r\n";
+			} else
+			{
+				strcpy(reply, "HTTP/1.1 404 Not Found\r\n\r\n";
+			}
 		}
 
-	}else 
+	}else
 	{
-
-		strcpy(reply, "HTTP/1.1 404 Not Found\r\n\r\n");
-
+		print("Invalid request method");
 	}
+
+
 
 	if(send(client_fd, reply, strlen(reply), 0) == -1)
 	{
