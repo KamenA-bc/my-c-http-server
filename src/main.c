@@ -229,7 +229,6 @@ void *parsing_worker(void *args)
 	{
 		if(path && strncmp(path, "/files/", 7) == 0)
 		{
-			path += 7;
 
 			char full_path[BUFFER_SIZE];
 			if(base_directory != NULL)
