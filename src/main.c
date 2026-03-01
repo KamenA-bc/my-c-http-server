@@ -251,7 +251,7 @@ void *parsing_worker(void *args)
 				strcpy(reply, "HTTP/1.1 201 Created\r\n\r\n");
 			} else
 			{
-				strcpy(reply, "HTTP/1.1 404 Not Found\r\n\r\n");
+				strcpy(reply, "HTTP/1.1 404 Not Found gay\r\n\r\n");
 			}
 		}
 
