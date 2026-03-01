@@ -142,6 +142,10 @@ void *parsing_worker(void *args)
 
 
 	char *request_body = strstr(output, "\r\n\r\n");
+	if(request_body)
+	{
+		request_body += 4;
+	}
 
 	char *path = strstr(output, " ");
 	if (path) 
