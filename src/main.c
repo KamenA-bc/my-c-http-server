@@ -140,15 +140,13 @@ void *parsing_worker(void *args)
 	}
 
 
+
 	char *request_body = strstr(output, "\r\n\r\n");
 	if(request_body)
 	{
-		char *body_end = strstr(request_body, " ");
-		if(body_end)
-		{
-			*body_end = '\0';
-		}
+		request_body += 8;
 	}
+
 
 
 	char *path = strstr(output, " ");
