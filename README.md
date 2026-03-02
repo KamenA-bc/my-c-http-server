@@ -14,24 +14,24 @@ and more.
 **Note**: If you're viewing this repo on GitHub, head over to
 [codecrafters.io](https://codecrafters.io) to try the challenge.
 
-# Passing the first stage
 
-The entry point for your HTTP server implementation is in `src/main.c`. Study
-and uncomment the relevant code, and push your changes to pass the first stage:
+Core Features
 
-```sh
-git commit -am "pass 1st stage" # any msg
-git push origin master
-```
+    Full Concurrency: Utilizes POSIX Threads (pthreads) in a Master-Worker architecture to handle thousands of simultaneous client connections without blocking the main event loop.
 
-Time to move on to the next stage!
+    Manual Protocol Parsing: Dynamically parses raw HTTP/1.1 requests, extracting HTTP methods, URL paths, and specific headers (like User-Agent) using safe string manipulation.
 
-# Stage 2 & beyond
+    Binary File Transmission: Safely serves both human-readable text and raw binary payloads (like images or compiled code) from the hard drive, utilizing dynamic memory allocation (malloc/free) and memcpy to bypass standard C-string null-byte truncation traps.
 
-Note: This section is for stages 2 and beyond.
+    Memory Safety: Rigorously manages Stack vs. Heap memory lifecycles, ensuring zero memory leaks, preventing dangling pointers, and autonomously cleaning up detached zombie threads.
 
-1. Ensure you have `cmake` installed locally
-1. Run `./your_program.sh` to run your program, which is implemented in
-   `src/main.c`.
-1. Commit your changes and run `git push origin master` to submit your solution
-   to CodeCrafters. Test output will be streamed to your terminal.
+Architecture
+
+1. The Dispatcher (Main Thread)
+The server runs an infinite event loop using standard POSIX sockets (socket, bind, listen, accept). When a new client connects, the dispatcher dynamically allocates memory on the Heap for the client's file descriptor and hands it off to a new detached worker thread, instantly returning to listen for the next connection.
+
+2. The Worker (Thread Pool)
+Each worker thread safely unpacks the client's socket descriptor, frees the intermediate Heap memory to prevent leaks, and takes over the connection.
+
+3. The Unified Output Pipeline
+To maximize efficiency and respect the DRY (Don't Repeat Yourself) principle, the routing logic prepares either Stack-based text responses or Heap-based binary payloads. A generic pointer safely redirects the final data to a single, unified send() call before the thread cleans up its memory and terminates.
